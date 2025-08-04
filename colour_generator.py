@@ -8,17 +8,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-print(os.getenv("API_KEY"))
-genai.configure(api_key=os.getenv("API_KEY"))
+api_key = os.getenv('API_KEY')
+
+genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 def get_palette(prompt):
     try:
         response = model.generate_content(
-           f"Generate a 5-color palette (hex codes only) for the theme: {prompt}. Return the hex codes only"
+           f"Generate a 5-color palette (hex codes only) for the theme: {prompt}. Return the hex codes, comma-seperated."
         )
         text = response.text
-        codes = re.findall
+        codes = re.findall(r"#(?:[0-9a-fA-F]{3}){1,2}", text)
         return codes[:5]
     except Exception as e:
         print("Gemini error", e)
@@ -26,12 +27,13 @@ def get_palette(prompt):
     
 
 app = tk.Tk()
-app.title()
-app.geometry()
-app.resizable()
+app.title("colour palette hehehhe")
+app.geometry("500x400")
+app.resizable(False, False)
 
 tk.Label(app, text="Enter a theme:")
 entry = tk.Entry(app, width=40)
+entry.pack()
 
 swatch_frame = tk.Frame(app)
 swatch_frame.pack(pady=20)
@@ -39,10 +41,14 @@ swatch_frame.pack(pady=20)
 swatches = []
 
 for i in range(5):
-    canvas = tk.Canvas(swatch_frame, width = 80)
-    canvas.grid(row=0, column=i, padx=5)
-    label= tk.Label()
-    label.grid()
+    frame = tk.Frame(swatch_frame)
+    frame.grid(row=0, column=i, padx=5)
+
+    canvas = tk.Canvas(frame, width=60, height=60, bg="#ffffff", highlightthickness=1, highlightbackground="black")
+    canvas.pack()
+    
+    label = tk.Label(frame, text="#------")
+    label.pack()
     swatches.append((canvas, label))
 
 def generate_palette():
@@ -53,15 +59,15 @@ def generate_palette():
     
     colours = get_palette(theme)
     if not colours:
-        messagebox.showeeor("Error", "Could not generate palette. Try another theme")
+        messagebox.showerror("Error", "Could not generate palette. Try another theme")
         return
     
     for (canvas, label), colour in zip(swatches, colours):
         canvas.config(bg=colour)
         label.config(text=colour)
 
-tk.Button(app, text="Generate Palette", command=generate_palette,
-          bg = "lightblue")
+tk.Button(app, text="Generate Palette", 
+          command=generate_palette, bg="lightblue").pack(pady=10)
 
 app.mainloop()
 
