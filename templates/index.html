@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Colour Palette Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 30px; }
+        .swatch { display: inline-block; margin: 10px; text-align: center; }
+        .color-box { width: 60px; height: 60px; border: 1px solid #000; margin-bottom: 5px; }
+        input[type="text"], input[type="file"] { padding: 8px; font-size: 14px; margin: 5px; }
+        button { padding: 8px 15px; font-size: 14px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Colour Palette Generator</h1>
+
+    <div>
+        <h2>Generate from Theme</h2>
+        <input type="text" id="theme" placeholder="Enter a theme">
+        <button onclick="generatePalette()">Generate</button>
+        <div id="palette" style="margin-top:20px;"></div>
+    </div>
+
+    <hr style="margin:40px 0;">
+
+    <div>
+        <h2>Extract Palette from Image</h2>
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="uploadImage()">Upload & Extract</button>
+        <div id="imagePalette" style="margin-top:20px;"></div>
+    </div>
+
+    <script>
+        function showPalette(containerId, palette) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = "";
+            if (!palette || palette.length === 0) {
+                container.innerHTML = "<p>No colors found.</p>";
+                return;
+            }
+            palette.forEach(color => {
+                container.innerHTML += `
+                    <div class="swatch">
+                        <div class="color-box" style="background:${color}"></div>
+                        <div>${color}</div>
+                    </div>
+                `;
+            });
+        }
+
+        async function generatePalette() {
+            const theme = document.getElementById("theme").value.trim();
+            if (!theme) {
+                alert("Please enter a theme");
+                return;
+            }
+            try {
+                const res = await fetch("/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ theme })
+                });
+                const data = await res.json();
+                showPalette("palette", data.palette);
+            } catch (err) {
+                alert("Failed to generate palette");
+                console.error(err);
+            }
+        }
+
+        async function uploadImage() {
+            const fileInput = document.getElementById("imageInput");
+            if (fileInput.files.length === 0) {
+                alert("Please select an image");
+                return;
+            }
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("image", file);
+
+            try {
+                const res = await fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+                showPalette("imagePalette", data.palette);
+            } catch (err) {
+                alert("Failed to extract palette");
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
+
+
